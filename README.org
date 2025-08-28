@@ -1,0 +1,187 @@
+#+TITLE: ebook-notes.el
+* Introduction
+
+=ebook-notes.el= is an Emacs Lisp package designed to streamline the process of importing highlights and notes from Amazon Kindle's "My Clippings.txt" file directly into Org mode files. It automatically handles the association of notes with their corresponding highlights and prevents the import of duplicate entries.
+
+* Output
+
+The output of this package is whatever you want it to be.  As an example, the /default/ Org output for a highlight from /[[https://craphound.com/category/bezzle/][The Bezzle]]/, written by Cory Doctorow would look like:
+
+#+begin_example
+  ,* Capture: 2024-04-24 The Bezzle   :interpretation_needed:
+  :PROPERTIES:
+  :ROAM_REFS: The Bezzle (Cory Doctorow)
+  :END:
+
+  ,#+begin_quote
+  “Attackers just have to find one mistake, defenders have to be perfect.”
+  ,#+end_quote
+  - The Bezzle
+  - Cory Doctorow
+  - Page: 60
+  - Location: 920-920
+  - Capture date: [2024-04-24 Wed 23:17:45]
+#+end_example
+
+You can then use this capture in whatever way you like.  If you had /The Bezzle/ in your BibTeX references, then the ~ROAM_REFS~ property would have been replaced with an [[https://github.com/jkitchin/org-ref][org-ref]] link.
+
+*Remember*, none of this output is required.  The Kindle clippings (highlight and notes) are extracted into a list of structs.  The rest is up to you.
+
+* Features
+
+** Core Functionality
+- *Clipping Processing:* Parses Kindle text files to extract highlights and notes.
+- *Org-mode Integration:* Generates new entries in a standard Org-mode format, appending them to a specified file and optionally placing them under a user-defined heading hierarchy.
+- *BibTeX Support:* Links clippings to BibTeX entries for contextual citations and generates ~org-ref~ references where a source document matches a BibTeX entry.
+
+** Duplicate Prevention & Note Handling
+- *Deduplication:* Prevents processing highlights or notes more than once by keeping a log of processed clippings. This logic is standalone, allowing use in other projects.
+- *Note Association:** Automatically groups notes with their associated highlights from the same location in a book. This also includes creating separate entries for new notes attached to old highlights.
+
+** Extensibility
+- *Modular Design:* The underlying functions are self-contained and modular, allowing for easy customisation and integration into other workflows.
+
+* Installation
+
+This package is not yet available on MELPA. In the meantime, you can install it by cloning the repository and adding the directory to your load-path.
+
+#+begin_src elisp :tangle no
+  (add-to-list 'load-path "~/path/to/ebook-notes")
+  (require 'ebook-notes)
+#+end_src
+
+* Usage
+
+The flow of logic is to
+
+1. Process the clippings file into a list of ~kindle-entry~ structs
+2. Get the list of new/unseen clippings with ~ebook-notes/get-new-clippings~ - this uses the ~dupe-prevention~ package in the background
+3. /(Optional)/ Generate Org entries from the new clippings (~ebook-notes/generate-org-entries-from-new-clippings~)
+4. /(Optional)/ Write the Org entries to file (~ebook-notes/append-org-entries-to-file org-entries~)
+
+
+There's the [[id:D1514C3A-0AEB-4959-AB99-69AE71AF8379][TL;DR]] approach by calling a single function, or a [[id:7D79C355-B195-4F3E-B20C-15E1A59438DA][step-by-step]] approach, both discussed below.
+
+If you want to do something a bit differently, look at the [[id:23EB99C9-AFD1-4B8D-82BE-73B90C2B4B15][Configurable options]] section below.
+
+** TL;DR - just make it work
+:PROPERTIES:
+:ID:       D1514C3A-0AEB-4959-AB99-69AE71AF8379
+:END:
+
+The quick and dirty way to do all the processing is:
+
+#+begin_src emacs-lisp
+  (require 'ebook-notes)
+  (ebook-notes-all
+   "~/Downloads/My Clippings.txt"         ; Source of clippings
+   "~/clippings.org"                      ; Where they will be written
+   ;; === Optional settings ===
+   ;; The Org headings
+   '("My Clippings" "New")
+   ;; Logging?
+   t
+   ;; Where to save the list of already seen clippings
+   "~/.emacs.d/processed-kindle-clippings.log")
+#+end_src
+
+** Detailed step-by-step
+:PROPERTIES:
+:ID:       7D79C355-B195-4F3E-B20C-15E1A59438DA
+:END:
+
+Here's a basic example of running each of the commands step-by-step
+
+#+begin_src emacs-lisp
+  ;; Load the package
+  (require 'ebook-notes-org)
+
+  ;; Import the clippings
+  (progn
+    (setq ebn-clippings (ebook-notes/process-kindle-clippings "~/Downloads/My Clippings.txt"))
+    (message "There are  %s  clippings" (length ebn-clippings)))
+
+  (let (;; Where to save the list of previously processed clippings
+        (dupe-prevention-log-file "~/.emacs.d/processed-kindle-clippings.log")
+        ;; Output file
+        (ebn-org-file "~/tmp/ebn-new-org-2.org")
+        ;; Set these to NIL to make sure nothing is sitting around in the environment
+        dupe-prevention-cache
+        bibtex-entries)
+    (message "--------\nStarting run...   %s"
+             (format-time-string "[%Y-%m-%d %a %H:%M:%S]" (current-time)))
+
+    ;; ;; Uncomment if you want profiling, don't forget to turn it off below!
+    ;; (profiler-start 'cpu+mem)
+
+    (let* (;; Get the list of new clippings.
+           (new-clippings (ebook-notes/get-new-clippings ebn-clippings))
+           ;; Now, generate the Org entries from the new clippings.
+           (org-entries (ebook-notes/generate-org-entries-from-new-clippings new-clippings ebn-clippings)))
+
+      ;; Append the new entries to your Org file.
+      (ebook-notes/append-org-entries-to-file org-entries ebn-org-file))
+
+    ;; (profiler-stop)
+
+    (message "--------\nFinished run...   %s"
+             (format-time-string "[%Y-%m-%d %a %H:%M:%S]" (current-time)))
+
+    ;; ;; Now view the profile
+    ;; (profiler-report)
+    )
+#+end_src
+* Configurable options
+:PROPERTIES:
+:ID:       23EB99C9-AFD1-4B8D-82BE-73B90C2B4B15
+:END:
+
+The following variables change the behaviour of ~ebook-notes~:
+
+- ~generate-clipping-id~ :: Function used for generating unique identifiers based on a clipping.  Defaults to ~ebook-notes/create-clipping-identifier~
+- ~generate-entry-string~ :: Function for generating an org entry from the clippings data.  Defaults to ~ebook-notes/generate-org-entry-string~
+- ~bibtex-entries~ :: Stores the list of BibTeX entries received via ~BIBTEX-COMPLETION-CANDIDATES~.
+
+  Note that this is dynamically bound, so if you want to force a reload, just set it to ~NIL~.
+- ~dupe-prevention-log-file~ :: Path to a file that stores a list of unique identifiers for processed items.
+- ~dupe-prevention-cache~ :: An in-memory hash table to cache processed item identifiers.
+
+* Tests
+
+This package should have reasonably comprehensive testing.
+
+The command to run the testing is:
+
+#+begin_src emacs-lisp
+emacs -batch -f package-initialize -L ${PACKAGE_DIR} -L ${PACKAGE_DIR}/tests -f buttercup-run-discover
+#+end_src
+
+(Remember to set/replace ~PACKAGE_DIR~ with the location of this package.)
+* An intellectual aside
+
+Something that should be mentioned here is that parts of this code were generated by Google's Gemini 2.5 Flash model.
+
+*Why?*
+
+Because I was intrigued with how well it would work with a non-mainstream language.
+
+No, seriously: *Why?*
+
+As of mid-2025, I believe the LLM (this is *NOT* AI!) is a massive hype bubble.  However, I wanted to prove myself wrong.
+
+Interestingly, Gemini does a reasonable job of writing Emacs Lisp.  The initial POC was quick and reasonably successful.  The next steps towards an actual working codebase however, were not quick or particularly successful when using the LLM.  I'm going to write this up as a blog post and update here with a link.  Keep watching...
+
+* Author
+
+This package is developed by *Stewart V. Wright*.
+
+- *Email*: stewart@vifortech.com
+- *Website/GitHub*: https://github.com/stewart123579
+
+* License
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public Licence as published by the Free Software Foundation, either version 3 of the Licence, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public Licence for more details.
+
+You should have received a copy of the GNU General Public Licence along with this program. If not, see [[http://www.gnu.org/licenses/][http://www.gnu.org/licenses/]].
