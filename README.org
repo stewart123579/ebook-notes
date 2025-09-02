@@ -184,7 +184,7 @@ Interestingly, Gemini does a reasonable job of writing Emacs Lisp.  The initial 
 This package is developed by *Stewart V. Wright*.
 
 - *Email*: stewart@vifortech.com
-- *Website/GitHub*: https://github.com/stewart123579
+- *Website/GitHub*: https://github.com/stewart123579/ebook-notes
 
 * License
 
