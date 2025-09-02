@@ -1,7 +1,7 @@
 #+TITLE: ebook-notes.el
 * Introduction
 
-=ebook-notes.el= is an Emacs Lisp package designed to streamline the process of importing highlights and notes from Amazon Kindle's "My Clippings.txt" file directly into Org mode files. It automatically handles the association of notes with their corresponding highlights and prevents the import of duplicate entries.
+=ebook-notes.el= is an Emacs Lisp package designed to streamline the process of importing [[https://www.amazon.com/Kindle-App-Updates/b?node=11627044011][highlights and notes]] from an Amazon Kindle's "My Clippings.txt" file directly into Org mode files. It automatically handles the association of notes with their corresponding highlights and prevents the import of duplicate entries.
 
 * Output
 
@@ -35,11 +35,17 @@ You can then use this capture in whatever way you like.  If you had /The Bezzle/
 - *BibTeX Support:* Links clippings to BibTeX entries for contextual citations and generates ~org-ref~ references where a source document matches a BibTeX entry.
 
 ** Duplicate Prevention & Note Handling
+(See [[dupe-prevention.el]] for the code.)
+
 - *Deduplication:* Prevents processing highlights or notes more than once by keeping a log of processed clippings. This logic is standalone, allowing use in other projects.
-- *Note Association:** Automatically groups notes with their associated highlights from the same location in a book. This also includes creating separate entries for new notes attached to old highlights.
+- *Note Association:* Automatically groups notes with their associated highlights from the same location in a book. This also includes creating separate entries for new notes attached to old highlights.
 
 ** Extensibility
 - *Modular Design:* The underlying functions are self-contained and modular, allowing for easy customisation and integration into other workflows.
+
+* Getting your Kindle clippings file
+
+The Kindle stores clippings in the file ~/documents/My Clippings.txt~, so on my Mac it is mounted at ~/Volumes/Kindle/documents/My Clippings.txt~.
 
 * Installation
 
@@ -167,7 +173,9 @@ Because I was intrigued with how well it would work with a non-mainstream langua
 
 No, seriously: *Why?*
 
-As of mid-2025, I believe the LLM (this is *NOT* AI!) is a massive hype bubble.  However, I wanted to prove myself wrong.
+As of mid-2025, I believe the LLM is a massive hype bubble.  However, I wanted to prove myself wrong.
+
+Also, *DON'T* call it AI.
 
 Interestingly, Gemini does a reasonable job of writing Emacs Lisp.  The initial POC was quick and reasonably successful.  The next steps towards an actual working codebase however, were not quick or particularly successful when using the LLM.  I'm going to write this up as a blog post and update here with a link.  Keep watching...
 
