@@ -177,7 +177,9 @@ As of mid-2025, I believe the LLM is a massive hype bubble.  However, I wanted t
 
 Also, *DON'T* call it AI.
 
-Interestingly, Gemini does a reasonable job of writing Emacs Lisp.  The initial POC was quick and reasonably successful.  The next steps towards an actual working codebase however, were not quick or particularly successful when using the LLM.  I'm going to write this up as a blog post and update here with a link.  Keep watching...
+Interestingly, Gemini does a reasonable job of writing Emacs Lisp.  The initial POC was quick and reasonably successful.  The next steps towards an actual working codebase however, were not quick or particularly successful when using the LLM.
+
+I wrote this up in some detail as a [[https://stewart123579.github.io/blog/posts/emacs/importing-kindle-clippings-in-emacs/][blog post]].
 
 * Author
 
